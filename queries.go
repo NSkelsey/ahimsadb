@@ -123,27 +123,6 @@ var (
 	`
 )
 
-// The overarching struct that contains everything needed for a connection to a
-// sqlite db containing the public record
-type PublicRecord struct {
-	conn *sql.DB
-
-	// Precompiled SQL statements
-	selectTxid        *sql.Stmt
-	selectBlockHead   *sql.Stmt
-	selectBlockBltns  *sql.Stmt
-	selectAuthor      *sql.Stmt
-	selectAuthorBltns *sql.Stmt
-	selectBlacklist   *sql.Stmt
-	selectBoardSum    *sql.Stmt
-	selectBoardBltns  *sql.Stmt
-	selectAllBoards   *sql.Stmt
-	selectRecentConf  *sql.Stmt
-	selectUnconfirmed *sql.Stmt
-	selectBlksByDay   *sql.Stmt
-	selectDBStatus    *sql.Stmt
-}
-
 // Returns information about a single author
 func (db *PublicRecord) GetJsonAuthor(address string) (*ahimsajson.AuthorResp, error) {
 

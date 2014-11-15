@@ -1,28 +1,28 @@
 package ahimsadb
 
-import (
-	"database/sql"
-	"os"
-	"path/filepath"
-)
+import "database/sql"
 
-func SetupTestDB() (*PublicRecord, error) {
+// The overarching struct that contains everything needed for a connection to a
+// sqlite db containing the public record
+type PublicRecord struct {
+	conn *sql.DB
 
-	var dbpath string
+	// Precompiled SQL for ahimsarest
+	selectTxid        *sql.Stmt
+	selectBlockHead   *sql.Stmt
+	selectBlockBltns  *sql.Stmt
+	selectAuthor      *sql.Stmt
+	selectAuthorBltns *sql.Stmt
+	selectBlacklist   *sql.Stmt
+	selectBoardSum    *sql.Stmt
+	selectBoardBltns  *sql.Stmt
+	selectAllBoards   *sql.Stmt
+	selectRecentConf  *sql.Stmt
+	selectUnconfirmed *sql.Stmt
+	selectBlksByDay   *sql.Stmt
+	selectDBStatus    *sql.Stmt
 
-	testEnvPath := os.Getenv("TEST_DB_PATH")
-	if testEnvPath != "" {
-		dbpath = testEnvPath
-	} else {
-		dbpath = os.Getenv("GOPATH") + "/src/github.com/NSkelsey/ahimsarest/test.db"
-		dbpath = filepath.Clean(dbpath)
-	}
-	var err error
-	db, err := LoadDb(dbpath)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
+	// Precompiled
 }
 
 // Loads a sqlite db, checks if its reachabale and prepares all the queries.
