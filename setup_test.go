@@ -18,7 +18,7 @@ func SetupTestDB() (*PublicRecord, error) {
 		dbpath = filepath.Clean(dbpath)
 	}
 	var err error
-	db, err := LoadDb(dbpath)
+	db, err := LoadDB(dbpath)
 	if err != nil {
 		return nil, err
 	}

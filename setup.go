@@ -1,6 +1,10 @@
 package ahimsadb
 
-import "database/sql"
+import (
+	"database/sql"
+
+	"github.com/NSkelsey/protocol/ahimsa"
+)
 
 // The overarching struct that contains everything needed for a connection to a
 // sqlite db containing the public record
@@ -26,8 +30,8 @@ type PublicRecord struct {
 }
 
 // Loads a sqlite db, checks if its reachabale and prepares all the queries.
-func LoadDb(dbpath string) (*PublicRecord, error) {
-	conn, err := sql.Open("sqlite3", dbpath)
+func LoadDB(path string) (*PublicRecord, error) {
+	conn, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}
@@ -47,6 +51,36 @@ func LoadDb(dbpath string) (*PublicRecord, error) {
 	}
 
 	return db, nil
+}
+
+// Creates a DB at the desired path or drops an existing one and recreates a
+// new empty one at the path.
+func InitDB(path string) (*PublicRecord, error) {
+	conn, err := sql.Open("sqlite3", path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the database schema for the public record.
+	create, err := ahimsa.GetCreateSql()
+	if err != nil {
+		return nil, err
+	}
+
+	dropcmd := `
+	DROP TABLE IF EXISTS blocks;
+	DROP TABLE IF EXISTS bulletins;
+	DROP TABLE IF EXISTS blacklist;
+	`
+
+	// DROP db if it exists and recreate it.
+	_, err = conn.Exec(dropcmd + create)
+	defer conn.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return LoadDB(path)
 }
 
 // Prepares all of the selects for maximal speediness note that all of the queries
