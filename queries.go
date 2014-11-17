@@ -121,6 +121,13 @@ var (
 		FROM (SELECT max(blocks.timestamp) AS timestamp FROM blocks) as l_blk,
 			 (SELECT max(bulletins.timestamp) AS timestamp FROM bulletins) as l_bltn
 	`
+
+	// Used by GetAllAuthors
+	selectAllAuthors string = `
+	SELECT author, count(*), min(blocks.timestamp)
+		FROM bulletins LEFT JOIN blocks on bulletins.block = blocks.hash
+		GROUP BY author
+	`
 )
 
 // Returns information about a single author
@@ -366,4 +373,38 @@ func (db *PublicRecord) LatestBlkAndBltn() (int64, int64, error) {
 	}
 
 	return latestBlk, latestBltn, nil
+}
+
+func (db *PublicRecord) GetAllAuthors() ([]*ahimsajson.AuthorSummary, error) {
+
+	authors := []*ahimsajson.AuthorSummary{}
+
+	rows, err := db.selectAllAuthors.Query()
+	if err != nil {
+		return authors, err
+	}
+
+	for rows.Next() {
+		var address string
+		var numbltns uint64
+		var firstblkts sql.NullInt64
+
+		err := rows.Scan(&address, &numbltns, &firstblkts)
+		if err != nil {
+			return authors, err
+		}
+
+		author := &ahimsajson.AuthorSummary{
+			Address:  address,
+			NumBltns: numbltns,
+		}
+
+		if firstblkts.Valid {
+			author.FirstBlkTs = firstblkts.Int64
+		}
+
+		authors = append(authors, author)
+	}
+
+	return authors, nil
 }

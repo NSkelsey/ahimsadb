@@ -2,6 +2,8 @@ package ahimsadb
 
 import (
 	"database/sql"
+	"os"
+	"path/filepath"
 
 	"github.com/NSkelsey/protocol/ahimsa"
 )
@@ -25,8 +27,7 @@ type PublicRecord struct {
 	selectUnconfirmed *sql.Stmt
 	selectBlksByDay   *sql.Stmt
 	selectDBStatus    *sql.Stmt
-
-	// Precompiled
+	selectAllAuthors  *sql.Stmt
 }
 
 // Loads a sqlite db, checks if its reachabale and prepares all the queries.
@@ -163,5 +164,29 @@ func prepareQueries(db *PublicRecord) error {
 		return err
 	}
 
+	db.selectAllAuthors, err = db.conn.Prepare(selectAllAuthors)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func SetupTestDB() (*PublicRecord, error) {
+
+	var dbpath string
+
+	testEnvPath := os.Getenv("TEST_DB_PATH")
+	if testEnvPath != "" {
+		dbpath = testEnvPath
+	} else {
+		dbpath = os.Getenv("GOPATH") + "/src/github.com/NSkelsey/ahimsadb/test.db"
+		dbpath = filepath.Clean(dbpath)
+	}
+	var err error
+	db, err := LoadDB(dbpath)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
