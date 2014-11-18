@@ -23,7 +23,7 @@ var (
 	// Used by GetJsonBlock
 	selectBlockHeadSql string = `
 		SELECT hash, prevhash, height, blocks.timestamp, count(bulletins.txid) 
-		FROM blocks JOIN bulletins on blocks.hash = bulletins.block
+		FROM blocks LEFT JOIN bulletins on blocks.hash = bulletins.block
 		WHERE blocks.hash = $1
 	`
 	selectBlockBltnsSql string = `
