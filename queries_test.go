@@ -21,6 +21,16 @@ func TestJsonBlock(t *testing.T) {
 		t.Fatalf("Hashes don't match [%s] and returned: [%s]", h, respH)
 	}
 
+	// Check to see if empty block is reachable
+
+	h = "00000000efaee711979fe42e667188e50b1096e4d9cfcbc9a82101336189c2ca"
+	jsonBlkResp, err = db.GetJsonBlock(h)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(jsonBlkResp.Bulletins) > 0 {
+		t.Fatalf("This is an empty block")
+	}
 }
 
 func TestJsonAuthor(t *testing.T) {

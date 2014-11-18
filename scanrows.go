@@ -2,6 +2,7 @@ package ahimsadb
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/NSkelsey/ahimsarest/ahimsajson"
 )
@@ -67,10 +68,12 @@ func scanJsonBlk(cursor scannable) (*ahimsajson.JsonBlkHead, error) {
 
 	err := cursor.Scan(&hash, &prevhash, &height, &timestamp, &numbltns)
 	if err != nil {
+		log.Println("scan failed")
 		return nil, err
 	}
 
 	if !hash.Valid {
+		log.Println("Hello world")
 		return nil, sql.ErrNoRows
 	}
 

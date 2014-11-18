@@ -3,7 +3,9 @@ package ahimsadb
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"net/url"
+	"strings"
 	"time"
 
 	_ "code.google.com/p/go-sqlite/go1/sqlite3"
@@ -23,7 +25,7 @@ var (
 	// Used by GetJsonBlock
 	selectBlockHeadSql string = `
 		SELECT hash, prevhash, height, blocks.timestamp, count(bulletins.txid) 
-		FROM blocks LEFT JOIN bulletins on blocks.hash = bulletins.block
+		FROM blocks LEFT JOIN bulletins ON blocks.hash = bulletins.block
 		WHERE blocks.hash = $1
 	`
 	selectBlockBltnsSql string = `
@@ -177,24 +179,33 @@ func (db *PublicRecord) GetJsonAuthor(address string) (*ahimsajson.AuthorResp, e
 }
 
 // Returns the single bulletin in json format, that is identified by txid.
-// If the bltn does not exist GetJsonBltn returns sql.ErrNoRows.
+// If the bltn does not exist GetJsonBltn returns sql.ErrNoRows. If the bltn
+// is within the blacklist then we will throw an ErrBltnCensored trying to scan
+// it in.
 func (db *PublicRecord) GetJsonBltn(txid string) (*ahimsajson.JsonBltn, error) {
+
+	txid = strings.ToLower(txid)
+
 	row := db.selectTxid.QueryRow(txid)
 	// If the bulletin is banned withold the bulletin
 	withhold := true
 	return scanJsonBltn(row, withhold)
 }
 
-// Returns the block head
-func (db *PublicRecord) GetJsonBlock(h string) (*ahimsajson.JsonBlkResp, error) {
+// Returns a JsonBlkResp which contains a block head and all of the bulletins in
+// in the block.
+func (db *PublicRecord) GetJsonBlock(hash string) (*ahimsajson.JsonBlkResp, error) {
 
-	row := db.selectBlockHead.QueryRow(h)
+	hash = strings.ToLower(hash)
+
+	log.Println("Block start", hash)
+	row := db.selectBlockHead.QueryRow(hash)
 	blkHead, err := scanJsonBlk(row)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := db.selectBlockBltns.Query(h)
+	rows, err := db.selectBlockBltns.Query(hash)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
