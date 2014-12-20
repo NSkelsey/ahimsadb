@@ -4,7 +4,14 @@ import (
 	"database/sql"
 
 	_ "code.google.com/p/go-sqlite/go1/sqlite3"
+	"github.com/conformal/btcutil"
 	"github.com/conformal/btcwire"
+)
+
+var (
+	insertBlock = `
+		INSERT INTO blocks (hash, prevhash, height, timestamp) VALUES($1, $2, $3, $4)
+	`
 )
 
 // A BlockRecord maps to a single block stored in the db.
@@ -13,6 +20,30 @@ type BlockRecord struct {
 	PrevHash  *btcwire.ShaHash
 	Height    uint64
 	Timestamp int64
+}
+
+// Writes a btcutil.Block to the db. Throws an error if there is a problem.
+func (db *PublicRecord) StoreBlock(blk *btcutil.Block) error {
+
+	hash, err := blk.Sha()
+	if err != nil {
+		return err
+	}
+
+	// Pull out MsgBlock to grab timestamp and prevhash.
+	msgblk := blk.MsgBlock()
+
+	// Execute insert with the parameters, ignore the result and catch any errors.
+	_, err = db.insertBlock.Exec(
+		hash.String(),
+		msgblk.Header.PrevBlock.String(),
+		blk.Height(),
+		msgblk.Header.Timestamp,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Writes a block to the sqlite db
